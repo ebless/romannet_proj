@@ -18,13 +18,6 @@ class Assignment
 		@details = details
 		@due_date = due_date
 	end
-	def print_assignment
-		if @details != '.'
-			puts 'The assignment for ' + @assigned_for + ' is of category ' + @type + ' and is due on ' + @due_date + ', and is titled ' + @details + '.'
-		else
-			puts 'The assignment for ' + @assigned_for + ' is of category ' + @type + ' and is due on ' + @due_date + ', and is titled ' + @details
-		end
-	end
 	def convert_project_id
 		if @assigned_for == "Middle East (sem 2) - 326S.1"
 			@assigned_for = '162513934'
@@ -43,6 +36,9 @@ end
 page = Nokogiri::HTML(open('/Users/ebless/Desktop/assignment_center.html'))
 
 assignments = page.css('#assignment-center-assignment-items')
+assignments.search('br').each do |i|
+	i.remove
+end
 
 rows = []
 
@@ -54,23 +50,27 @@ tasks = []
 
 rows.each do |i|
 	row_hash = Hash.from_xml(i.to_s)
-	row_hash2 = row_hash['tr']
-
-	info = row_hash2['td']
-	puts info
-	details_hash = info[2]
-	if details_hash.class == String
-		details = details_hash.strip
+	info = row_hash['tr']['td']
+	details = info[2]
+	if details.class == String
+		details = details.strip
 	else
-		details = details_hash['a']
+		details = details['a']
+		if details.class == Hash
+			details = details['div']
+		end
 	end
-
-	#puts 'The assignment for ' + info[0] + ' is of category ' + info[1] + ' and is due on ' + info[4] + ', and is titled ' + details + '.'
 	tasks << Assignment.new(info[0], info[1], details, info[4])
 end
 
+TodoistClient::Project.all.each do |i|
+	i.uncompleted_items.each do |k|
+		k.delete
+	end
+end
+
+
 tasks.each do |i|
-	i.print_assignment
 	i.convert_project_id
 	item = TodoistClient::Item.create(content: i.details, project_id: i.assigned_for, date_string: i.due_date)
 	puts [item.id, item.content]
