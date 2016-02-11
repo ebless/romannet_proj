@@ -2,6 +2,8 @@ require 'rubygems'
 require 'nokogiri'
 require 'active_support/core_ext/hash/conversions'
 require 'todoist_client'
+require 'time'
+require 'american_date'
 
 TodoistClient.api_token = '966cd60f2e8d48f9850ff37f36c12cde715e9eb6'
 
@@ -66,7 +68,9 @@ rows.each do |i|
 		puts details
 		
 	end
-	tasks << Assignment.new(info[0], info[1], details, info[4])
+	due_date = Time.parse(info[4])
+	due_date = due_date - 1
+	tasks << Assignment.new(info[0], info[1], details, due_date)
 end
 
 TodoistClient::Project.all.each do |i|
