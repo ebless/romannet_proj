@@ -7,10 +7,10 @@ TodoistClient.api_token = '966cd60f2e8d48f9850ff37f36c12cde715e9eb6'
 
 class Assignment
 	
-	attr_accessor :assigned_for
-	attr_accessor :type
-	attr_accessor :details
-	attr_accessor :due_date
+	attr_reader :assigned_for
+	attr_reader :type
+	attr_reader :details
+	attr_reader :due_date
 
 	def initialize(assigned_for, type, details, due_date)
 		@assigned_for = assigned_for
@@ -51,14 +51,20 @@ tasks = []
 rows.each do |i|
 	row_hash = Hash.from_xml(i.to_s)
 	info = row_hash['tr']['td']
+	nodes = page.search('i')
+	nodes.each {|node| node.replace(node.content)}
 	details = info[2]
 	if details.class == String
 		details = details.strip
 	else
-		details = details['a']
-		if details.class == Hash
-			details = details['div']
+		details_text = details['a']
+		details_link = i.css('a').first.attr('href')
+		if details_text.class == Hash
+			details_text = details_text['div']
 		end
+		details = "[#{details_text}](#{details_link})"
+		puts details
+		
 	end
 	tasks << Assignment.new(info[0], info[1], details, info[4])
 end
